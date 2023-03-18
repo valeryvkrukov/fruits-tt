@@ -3,26 +3,31 @@
 namespace App\Entity;
 
 use App\Repository\FruitRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FruitRepository::class)]
 class Fruit
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: Types::INTEGER, name: '`id`', unique: true)]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::STRING, name: '`genus`', length: 255)]
     private ?string $genus = null;
 
-    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::STRING, name: '`name`', length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::STRING, name: '`family`', length: 255)]
     private ?string $family = null;
 
-    #[ORM\Column(name: '`order`', length: 255)]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::STRING, name: '`order`', length: 255)]
     private ?string $order = null;
 
     #[ORM\OneToOne(inversedBy: 'fruit', cascade: ['persist', 'remove'])]
@@ -32,6 +37,13 @@ class Fruit
     public function getId(): ?int
     {
         return $this->id;
+    }
+    
+    public function setId(int $id): self
+    {
+        $this->id = $id;
+
+        return $this;
     }
 
     public function getGenus(): ?string

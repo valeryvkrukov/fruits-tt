@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Service\FruitsPersistService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -20,8 +21,8 @@ class FruitsLoadCommand extends Command
 {
     public function __construct(
         private HttpClientInterface $fruityviceClient,
-    )
-    {
+        private FruitsPersistService $fruitsPersistService
+    ) {
         parent::__construct();
     }
 
@@ -63,18 +64,23 @@ class FruitsLoadCommand extends Command
 
         $io->note(sprintf('Used loading mode: %s', $mode));
 
-        $data = $this->fetchFruityviceData($mode, );
+        $data = $this->fetchFruityviceData($mode, $param);
         
         if (is_string($data)) {
             $io->error($data);
 
             return Command::FAILURE;
         } else {
-            // should be changed to passing $data as DB service param
-            $io->write(json_encode($data));
+            $result = $this->fruitsPersistService->save($data);
+
+            if ($result !== FruitsPersistService::SUCCESS) {
+                $io->error($result);
+
+                return Command::FAILURE;
+            }
         }
 
-        $io->success('Data loaded.');
+        $io->success('Data loaded successfully.');
 
         return Command::SUCCESS;
     }

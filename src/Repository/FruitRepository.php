@@ -39,28 +39,65 @@ class FruitRepository extends ServiceEntityRepository
         }
     }
 
-//    /**
-//     * @return Fruit[] Returns an array of Fruit objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('f')
-//            ->andWhere('f.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('f.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * Create new records using API response
+     * If item (App\Entity\Fruit) with same ID already exists 
+     * record would be updated instead of creation
+     */
+    public function saveApiResponse(array $data, bool $flush = false): void
+    {
+        $loaded = $this->getLoaded(array_column($data, 'id'));
+        
+        foreach ($data as $item) {
+            if (array_key_exists($item['id'], $loaded)) {
+                $fruit = $loaded[$item['id']];
+            } else {
+                $fruit = new Fruit();
+            }
+            
+            foreach ($item as $name => $value) {
+                $method = 'set' . ucfirst($name);
+                if ($name !== 'nutritions') {
+                    $fruit->$method($value);
+                } else {
+                    $nutritions = new Nutritions();
+                    
+                    foreach ($value as $nutritionsName => $nutritionsValue) {
+                        $nutritionsMethod = 'set' . ucfirst($nutritionsName);
+                        $nutritions->$nutritionsMethod($nutritionsValue);
+                    }
 
-//    public function findOneBySomeField($value): ?Fruit
-//    {
-//        return $this->createQueryBuilder('f')
-//            ->andWhere('f.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+                    $fruit->$method($nutritions);
+                    $nutritions->setFruit($fruit);
+
+                    $this->getEntityManager()->persist($nutritions);
+                }
+            }
+
+            $this->getEntityManager()->persist($fruit);
+        }
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    /**
+     * Get currently loaded items by ID's list
+     * Method just for internal use
+     */
+    protected function getLoaded(array $ids): array
+    {
+        $loaded = $this->getEntityManager()->createQuery(
+            'SELECT f FROM App\Entity\Fruit f WHERE f.id IN (:ids)'
+        )->setParameter('ids', $ids)->getResult();
+
+        $result = [];
+
+        foreach ($loaded as $fruit) {
+            $result[$fruit->getId()] = $fruit;
+        }
+
+        return $result;
+    }
 }

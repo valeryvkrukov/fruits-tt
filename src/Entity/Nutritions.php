@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\NutritionsRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: NutritionsRepository::class)]
 class Nutritions
@@ -13,19 +15,24 @@ class Nutritions
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::FLOAT, name: '`carbohydrates`')]
     private ?float $carbohydrates = null;
 
-    #[ORM\Column]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::FLOAT, name: '`protein`')]
     private ?float $protein = null;
 
-    #[ORM\Column]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::FLOAT, name: '`fat`')]
     private ?float $fat = null;
 
-    #[ORM\Column]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::FLOAT, name: '`calories`')]
     private ?float $calories = null;
 
-    #[ORM\Column]
+    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::FLOAT, name: '`sugar`')]
     private ?float $sugar = null;
 
     #[ORM\OneToOne(mappedBy: 'nutritions', cascade: ['persist', 'remove'])]
