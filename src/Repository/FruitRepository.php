@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Fruit;
+use App\Entity\Nutritions;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -44,15 +45,19 @@ class FruitRepository extends ServiceEntityRepository
      * If item (App\Entity\Fruit) with same ID already exists 
      * record would be updated instead of creation
      */
-    public function saveApiResponse(array $data, bool $flush = false): void
+    public function saveApiResponse(array $data, bool $flush = false): array
     {
-        $loaded = $this->getLoaded(array_column($data, 'id'));
+        $loaded = $this->getLoaded($data);
+        $added = [];
         
         foreach ($data as $item) {
-            if (array_key_exists($item['id'], $loaded)) {
+            $alreadyExists = array_key_exists($item['id'], $loaded);
+
+            if ($alreadyExists) {
                 $fruit = $loaded[$item['id']];
             } else {
                 $fruit = new Fruit();
+                $added[] = $item['id'];
             }
             
             foreach ($item as $name => $value) {
@@ -80,17 +85,20 @@ class FruitRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+
+        return $added;
     }
 
     /**
      * Get currently loaded items by ID's list
      * Method just for internal use
      */
-    protected function getLoaded(array $ids): array
+    protected function getLoaded(array $data): array
     {
-        $loaded = $this->getEntityManager()->createQuery(
-            'SELECT f FROM App\Entity\Fruit f WHERE f.id IN (:ids)'
-        )->setParameter('ids', $ids)->getResult();
+        $ids = array_column($data, 'id');
+
+        $dql = sprintf('SELECT f FROM %s f WHERE f.id IN (:ids)', Fruit::class);
+        $loaded = $this->getEntityManager()->createQuery($dql)->setParameter('ids', $ids)->getResult();
 
         $result = [];
 
@@ -99,5 +107,17 @@ class FruitRepository extends ServiceEntityRepository
         }
 
         return $result;
+    }
+
+    public function getFruitsList(array $ids): array
+    {
+        $dql = sprintf('SELECT f FROM %s f WHERE f.id IN (:ids)', Fruit::class);
+
+        return $this
+            ->getEntityManager()
+            ->createQuery($dql)
+            ->setParameter('ids', $ids)
+            ->getArrayResult()
+        ;
     }
 }

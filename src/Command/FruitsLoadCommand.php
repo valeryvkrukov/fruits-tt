@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Service\FruitsPersistService;
+use App\Service\FruityViceClientService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -10,7 +11,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
     name: 'fruits:load',
@@ -20,23 +20,15 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class FruitsLoadCommand extends Command
 {
     public function __construct(
-        private HttpClientInterface $fruityviceClient,
+        private FruityViceClientService $fruityViceClientService,
         private FruitsPersistService $fruitsPersistService
     ) {
         parent::__construct();
     }
 
-    public function fetchFruityviceData(string $mode = 'all', string $param = null): array|string
-    {
-        $uri = implode('/', [$mode, ($param) ?? null]);
-
-        try {
-            return $this->fruityviceClient->request('GET', $uri)->toArray();
-        } catch (\Exception $e) {
-            return $e->getMessage();
-        }
-    }
-
+    /**
+     * {@inheritDoc}
+     */
     protected function configure(): void
     {
         $this
@@ -50,6 +42,9 @@ class FruitsLoadCommand extends Command
         ;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -64,7 +59,7 @@ class FruitsLoadCommand extends Command
 
         $io->note(sprintf('Used loading mode: %s', $mode));
 
-        $data = $this->fetchFruityviceData($mode, $param);
+        $data = $this->fruityViceClientService->fetchData($mode, $param);
         
         if (is_string($data)) {
             $io->error($data);

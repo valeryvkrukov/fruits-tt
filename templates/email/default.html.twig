@@ -1,0 +1,8 @@
+{% block body %}
+    <h2>Fruit(s) added list:</h2>
+    <ul>
+    {% for fruit in fruits %}
+        <li>Name: {{ fruit.name }}, ID: {{ fruit.id }}</li>
+    {% endfor %}
+    </ul>
+{% endblock %}
